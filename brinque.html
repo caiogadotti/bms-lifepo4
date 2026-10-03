@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#0F766E;--amb:#F59E0B;--dark:#0B2E2B;--red:#DC2626;--blue:#2563EB;--ink:#1E293B;--soft:#E6F2F1}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,sans-serif;color:var(--ink);background:#fff;user-select:none}
+.hint{font-size:.85rem;color:#475569;background:#FFF7ED;border-radius:10px;padding:8px 12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:14px}
+.painel{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:12px}
+.painel h5{margin:0 0 8px;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
+.knob{text-align:center}
+.knob b{font-family:'Instrument Serif',serif;font-size:2.4rem;font-weight:400;display:block;line-height:1}
+.knob small{color:#64748B}
+input[type=range]{width:100%;accent-color:#0F766E}input[type=checkbox]{accent-color:#0F766E}
+.rapidos{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+button{font-family:Inter;border:1px solid #CBD5E1;background:#fff;border-radius:10px;padding:7px 8px;font-weight:600;cursor:pointer;font-size:.8rem}
+button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+button.perigo{border-color:#FCA5A5;color:var(--red)}
+.tog{display:flex;flex-direction:column;gap:6px;font-size:.85rem;margin-top:6px}
+.cels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cel{text-align:center}
+.bat{position:relative;height:150px;width:62px;margin:10px auto 6px;border:3px solid #334155;border-radius:10px;background:#fff;overflow:hidden}
+.bat::before{content:"";position:absolute;top:-10px;left:18px;width:20px;height:8px;background:#334155;border-radius:3px 3px 0 0}
+.fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#5EEAD4,#0F766E);transition:height .15s}
+.est{position:absolute;left:-4px;right:-4px;height:0;border-top:3px dashed var(--amb)}
+.cel .v{font-weight:600;font-size:1rem}.cel small{display:block;color:#64748B;font-size:.75rem}
+.temp{display:inline-block;padding:1px 8px;border-radius:9px;font-size:.75rem;font-weight:600;margin-top:3px}
+.chaves{display:flex;gap:10px;margin:10px 0}
+.ch{flex:1;border-radius:12px;padding:8px 10px;font-weight:600;font-size:.85rem;display:flex;align-items:center;gap:8px;background:#DCFCE7;color:#166534}
+.ch.aberta{background:#FEE2E2;color:#991B1B}
+.ch i{width:12px;height:12px;border-radius:50%;background:#16A34A;display:inline-block}.ch.aberta i{background:#DC2626;box-shadow:0 0 8px #DC2626}
+.falhas{display:flex;flex-wrap:wrap;gap:5px}
+.fl{font-size:.7rem;padding:3px 7px;border-radius:8px;background:#F1F5F9;color:#64748B}
+.fl.on{background:#DC2626;color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.k{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:6px 10px}.k small{color:#64748B;font-size:.72rem}.k b{display:block;font-size:1.15rem}
+.k.erro b{color:var(--red)}
+canvas{width:100%;display:block}
+.leg{font-size:.75rem;color:#475569;margin:2px 0 0}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="hint">🎮 Você é a bancada. Gire a <b>corrente</b>, mude a <b>temperatura</b>, provoque falhas e veja o BMS reagir: as chaves abrem, os alarmes acendem e o tracejado amarelo (o SOC que o filtro de Kalman <i>acha</i>) persegue o SOC real. Desligue a histerese no filtro e veja ele se perder.</div>
+<div class="grid">
+<div>
+ <div class="painel">
+  <h5>Bancada</h5>
+  <div class="knob"><b id="It">0,0 A</b><small id="Il">repouso</small></div>
+  <input type="range" id="I" min="-6" max="15" step="0.1" value="0">
+  <div class="rapidos">
+   <button data-i="3">🔋 Descarga 1C</button><button data-i="-1.5">🔌 Carga 0,5C</button>
+   <button data-i="0">⏸ Repouso</button><button data-i="-6" class="perigo">⚠️ Carga 2C</button>
+   <button id="pico" class="perigo">⚡ Pico de 15 A</button><button id="reset">↺ Pack cheio</button>
+  </div>
+  <h5 style="margin-top:12px">Ambiente</h5>
+  <div class="knob"><b id="Tt">25 °C</b></div>
+  <input type="range" id="Ta" min="-25" max="75" step="1" value="25">
+  <div class="tog">
+   <label><input type="checkbox" id="hp" checked> bateria tem histerese</label>
+   <label><input type="checkbox" id="he" checked> filtro de Kalman sabe da histerese</label>
+   <label><input type="checkbox" id="cc" checked> carregador CC/CV para em 3,65 V</label>
+  </div>
+  <h5 style="margin-top:12px">Velocidade</h5>
+  <input type="range" id="vel" min="1" max="300" value="60"><small id="velt" style="color:#64748B"></small>
+ </div>
+</div>
+<div>
+ <div class="kpis">
+  <div class="k"><small>Tempo simulado</small><b id="kt">0 min</b></div>
+  <div class="k"><small>Tensão do pack</small><b id="kv">—</b></div>
+  <div class="k erro"><small>Erro do SOC estimado (célula 2)</small><b id="ke">—</b></div>
+ </div>
+ <div class="cels" id="cels"></div>
+ <div class="chaves"><div class="ch" id="chd"><i></i>Chave de descarga</div><div class="ch" id="chc"><i></i>Chave de carga</div></div>
+ <div class="falhas" id="falhas"></div>
+ <canvas id="g1" height="140"></canvas><div class="leg">Tensão das células (V) · linhas tracejadas: 2,50 V e 3,65 V</div>
+ <canvas id="g2" height="120"></canvas><div class="leg"><span style="color:#0F766E">━ SOC real</span> &nbsp; <span style="color:#F59E0B">┅ SOC estimado pelo EKF</span> &nbsp; (célula 2, a mais fraca)</div>
+</div>
+</div>
+<script>
+const P = __DADOS__;
+const N = 4, Ts = 1;
+const FAL = ["sobrecorrente desc.","sobrecorrente carga","sobretemp. desc.","sobretemp. carga","subtemp. desc.","subtemp. carga","sobretensão","subtensão"];
+const ocv = z => { z=Math.min(Math.max(z,-0.05),1.05); return 3.27+0.12*(z-0.5)-0.55*Math.exp(-z/0.04)+0.32*Math.exp(-(1-z)/0.03) };
+const docv = z => { z=Math.min(Math.max(z,-0.05),1.05); return 0.12+0.55/0.04*Math.exp(-z/0.04)+0.32/0.03*Math.exp(-(1-z)/0.03) };
+const fr = z => { z=Math.min(Math.max(z,0),1); return 1+2*Math.exp(-z/0.08)+0.4*Math.exp(-(1-z)/0.06) };
+const arr = T => Math.exp(P.Barr*(1/(T+273.15)-1/(P.Tref+273.15)));
+const gauss = () => { const u=1-Math.random(), v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v) };
+const a1 = Math.exp(-Ts/P.tau1), a2 = Math.exp(-Ts/P.tau2);
+let S;
+function reset(){
+  S = { t:0, z:[1,1,1,1], i1:[0,0,0,0], i2:[0,0,0,0], h:[1,1,1,1], s:[1,1,1,1], T:[25,25,25,25],
+        yI:null, yV:null, yT:null, f:new Array(8).fill(false), con:new Array(8).fill(0), coff:new Array(8).fill(0),
+        kdis:true, kchg:true, x:[...Array(N)].map(()=>[0.8,0,0,1]), Pm:[...Array(N)].map(()=>diag([0.04,1e-4,1e-4,1])), se:[1,1,1,1],
+        hist:[], pico:0, I:0, V:[3.4,3.4,3.4,3.4], cv:false };
+}
+function diag(d){ return d.map((v,i)=>d.map((_,j)=>i===j?v:0)) }
+function mm(A,B){ return A.map(r=>B[0].map((_,j)=>r.reduce((s,a,k)=>s+a*B[k][j],0))) }
+function tr(A){ return A[0].map((_,j)=>A.map(r=>r[j])) }
+function passo(){
+  const hp = document.getElementById("hp").checked, he = document.getElementById("he").checked;
+  const Ta = +document.getElementById("Ta").value;
+  let Ireq = S.pico>0 ? 15 : +document.getElementById("I").value;
+  if(S.pico>0) S.pico--;
+  // carregador CC/CV: não deixa a célula mais alta passar de 3,65 V
+  const kH = hp?1:0, R0 = S.z.map((z,c)=>P.R0[c]*arr(S.T[c])*fr(z));
+  const E = S.z.map((z,c)=>ocv(z)+kH*(P.M0*S.s[c]+P.M*S.h[c])-P.R1*S.i1[c]-P.R2*S.i2[c]);
+  S.cv=false;
+  if(Ireq<0 && document.getElementById("cc").checked){ const lim=Math.min(...E.map((e,c)=>Math.max((P.Vmax-e)/R0[c],0))); if(-Ireq>lim){ Ireq=-lim; S.cv=true } }
+  let I = Ireq; if((I>0&&!S.kdis)||(I<0&&!S.kchg)) I=0;
+  S.I=I; S.Ireq=Ireq;
+  const V = E.map((e,c)=>e-R0[c]*I);
+  // planta
+  for(let c=0;c<N;c++){
+    const ie = I>=0?I:P.eta*I, Ah=Math.exp(-Math.abs(ie*P.gama*Ts/(3600*P.Q[c])));
+    if(Math.abs(I)>1e-6){ S.s[c]=-Math.sign(I); S.h[c]=Ah*S.h[c]+(1-Ah)*(-Math.sign(I)) }
+    const q=R0[c]*I*I+P.R1*S.i1[c]**2+P.R2*S.i2[c]**2;
+    S.T[c]+=Ts/P.Cth*(q-P.hA*(S.T[c]-Ta));
+    S.z[c]-=Ts*ie/(3600*P.Q[c]); S.i1[c]=a1*S.i1[c]+(1-a1)*I; S.i2[c]=a2*S.i2[c]+(1-a2)*I;
+  }
+  // sensores e filtros
+  const Vm=V.map(v=>Math.round((v+P.sig_V*gauss())/0.001)*0.001), Im=I+P.off_I+P.sig_I*gauss(), Tm=S.T.map(T=>T+P.sig_T*gauss());
+  if(S.yI===null){ S.yI=Im; S.yV=[...Vm]; S.yT=[...Tm] }
+  const aI=Ts/(P.tauI+Ts), aT=Ts/(P.tauT+Ts);
+  S.yI+=aI*(Im-S.yI); S.yV=S.yV.map((y,c)=>y+aI*(Vm[c]-y)); S.yT=S.yT.map((y,c)=>y+aT*(Tm[c]-y));
+  // proteção
+  const If=S.yI, Tmax=Math.max(...S.yT), Tmin=Math.min(...S.yT), Vmx=Math.max(...S.yV), Vmn=Math.min(...S.yV);
+  const setc=[If>P.Imax_dis, If<-P.Imax_chg, Tmax>P.Tmax_dis, Tmax>P.Tmax_chg, Tmin<P.Tmin_dis, Tmin<P.Tmin_chg, Vmx>P.Vov, Vmn<P.Vuv];
+  const clrc=[If<0.9*P.Imax_dis, If>-0.9*P.Imax_chg, Tmax<P.Tmax_dis-5, Tmax<P.Tmax_chg-5, Tmin>P.Tmin_dis+5, Tmin>P.Tmin_chg+5, Vmx<P.Vmax, Vmn>P.Vmin+0.2];
+  for(let j=0;j<8;j++){ if(!S.f[j]){ S.con[j]=setc[j]?S.con[j]+1:0; if(S.con[j]>=P.Non[j]){ S.f[j]=true; S.coff[j]=0 } }
+    else { S.coff[j]=clrc[j]?S.coff[j]+1:0; if(S.coff[j]>=P.Noff){ S.f[j]=false; S.con[j]=0 } } }
+  const f=S.f; S.kdis=!(f[0]||f[2]||f[4]||f[7]); S.kchg=!(f[1]||f[3]||f[5]||f[6]);
+  // EKF por célula
+  const kE=he?1:0, Mh=kE*P.M, M0=kE*P.M0, i=Im, ie=i>=0?i:P.eta*i, AhE=Math.exp(-Math.abs(ie*P.gama*Ts/(3600*P.Qnom)));
+  if(Math.abs(i)>0.05) S.se=S.se.map(()=>-Math.sign(i));
+  for(let c=0;c<N;c++){
+    const x=S.x[c];
+    const xp=[x[0]-Ts*ie/(3600*P.Qnom), a1*x[1]+(1-a1)*i, a2*x[2]+(1-a2)*i, AhE*x[3]+(1-AhE)*(Math.abs(i)>0.05?-Math.sign(i):0)];
+    const A=diag([1,a1,a2,AhE]); let Pp=mm(mm(A,S.Pm[c]),tr(A)); P.Qekf.forEach((q,k)=>Pp[k][k]+=q);
+    const R0p=P.R0m*arr(S.yT[c])*fr(xp[0]);
+    const yhat=ocv(xp[0])+M0*S.se[c]+Mh*xp[3]-P.R1*xp[1]-P.R2*xp[2]-R0p*i;
+    const C=[docv(xp[0]),-P.R1,-P.R2,Mh];
+    const PC=Pp.map(r=>r.reduce((s,a,k)=>s+a*C[k],0)); const Sv=C.reduce((s,a,k)=>s+a*PC[k],0)+P.Rekf;
+    const K=PC.map(v=>v/Sv), inov=Vm[c]-yhat;
+    const xn=xp.map((v,k)=>v+K[k]*inov); xn[0]=Math.min(Math.max(xn[0],-0.05),1.05); xn[3]=Math.min(Math.max(xn[3],-1),1);
+    S.x[c]=xn; S.Pm[c]=Pp.map((r,a)=>r.map((v,b)=>v-K[a]*C.reduce((s,cc,k)=>s+cc*Pp[k][b],0)));
+  }
+  S.V=V; S.t+=Ts;
+  if(S.t%5===0){ S.hist.push({t:S.t,V:[...V],z:S.z[1],ze:S.x[1][0]}); if(S.hist.length>720) S.hist.shift() }
+}
+const cels=document.getElementById("cels");
+for(let c=0;c<N;c++){ cels.insertAdjacentHTML("beforeend",`<div class="cel"><b>Célula ${c+1}</b><small>${P.Q[c].toFixed(2)} Ah${c===1?" · a mais fraca":""}</small><div class="bat"><div class="fill" id="fill${c}"></div><div class="est" id="est${c}"></div></div><div class="v" id="v${c}"></div><small id="z${c}"></small><span class="temp" id="t${c}"></span></div>`) }
+document.getElementById("falhas").innerHTML=FAL.map((n,j)=>`<span class="fl" id="fl${j}">${n}</span>`).join("");
+function cor(T){ return T>=45?["#FEE2E2","#991B1B"]:T>=35?["#FEF3C7","#92400E"]:T<=0?["#DBEAFE","#1E40AF"]:["#DCFCE7","#166534"] }
+function grafico(id,series,ymin,ymax,linhas){
+  const cv=document.getElementById(id), ctx=cv.getContext("2d"), W=cv.clientWidth, H=+cv.getAttribute("height");
+  cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); ctx.clearRect(0,0,W,H);
+  const h=S.hist; if(h.length<2) return; const t0=h[0].t, t1=h[h.length-1].t;
+  const x=t=>30+(W-36)*(t-t0)/Math.max(t1-t0,1), y=v=>H-14-(H-22)*(Math.min(Math.max(v,ymin),ymax)-ymin)/(ymax-ymin);
+  ctx.font="10px Inter"; ctx.fillStyle="#94A3B8"; ctx.fillText(ymax,2,10); ctx.fillText(ymin,2,H-12); ctx.fillText(Math.round(t0/60)+" min",30,H-2); ctx.fillText(Math.round(t1/60)+" min",W-44,H-2);
+  (linhas||[]).forEach(v=>{ ctx.strokeStyle="#CBD5E1"; ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(30,y(v)); ctx.lineTo(W,y(v)); ctx.stroke(); ctx.setLineDash([]) });
+  series.forEach(([f,c,d])=>{ ctx.strokeStyle=c; ctx.lineWidth=2; ctx.setLineDash(d?[5,4]:[]); ctx.beginPath(); h.forEach((p,k)=>{ const v=f(p); k?ctx.lineTo(x(p.t),y(v)):ctx.moveTo(x(p.t),y(v)) }); ctx.stroke(); ctx.setLineDash([]) });
+}
+const CEL=["#0F766E","#DC2626","#2563EB","#9333EA"];
+function render(){
+  const fmt=v=>v.toFixed(1).replace(".",",");
+  document.getElementById("It").textContent=fmt(S.I)+" A";
+  document.getElementById("Il").textContent= S.Ireq!==S.I && S.I===0 ? "🚫 bloqueado pelo BMS" : S.cv ? "carregando em CV (tensão segurada em 3,65 V)" : S.I>0.01?"descarregando":S.I<-0.01?"carregando":"repouso";
+  document.getElementById("Tt").textContent=document.getElementById("Ta").value+" °C";
+  for(let c=0;c<N;c++){
+    document.getElementById("fill"+c).style.height=Math.min(Math.max(S.z[c],0),1)*100+"%";
+    document.getElementById("est"+c).style.bottom=Math.min(Math.max(S.x[c][0],0),1)*150+"px";
+    document.getElementById("v"+c).textContent=S.V[c].toFixed(3).replace(".",",")+" V";
+    document.getElementById("z"+c).textContent=`SOC ${Math.round(100*S.z[c])}% · EKF ${Math.round(100*S.x[c][0])}%`;
+    const [bg,fg]=cor(S.T[c]); const t=document.getElementById("t"+c); t.style.background=bg; t.style.color=fg; t.textContent=S.T[c].toFixed(1).replace(".",",")+" °C";
+  }
+  document.getElementById("chd").classList.toggle("aberta",!S.kdis); document.getElementById("chc").classList.toggle("aberta",!S.kchg);
+  document.getElementById("chd").lastChild.textContent= S.kdis?"Chave de descarga fechada":"Chave de descarga ABERTA";
+  document.getElementById("chc").lastChild.textContent= S.kchg?"Chave de carga fechada":"Chave de carga ABERTA";
+  S.f.forEach((v,j)=>document.getElementById("fl"+j).classList.toggle("on",v));
+  document.getElementById("kt").textContent=Math.floor(S.t/60)+" min";
+  document.getElementById("kv").textContent=S.V.reduce((a,b)=>a+b,0).toFixed(2).replace(".",",")+" V";
+  const e=100*(S.x[1][0]-S.z[1]); document.getElementById("ke").textContent=(e>=0?"+":"")+fmt(e)+" pp";
+  grafico("g1",[0,1,2,3].map(c=>[p=>p.V[c],CEL[c]]),2.4,3.75,[2.5,3.65]);
+  grafico("g2",[[p=>100*p.z,"#0F766E"],[p=>100*p.ze,"#F59E0B",true]],0,100);
+}
+let ult=performance.now(), resto=0;
+function loop(ag){ const real=Math.min((ag-ult)/1000,0.1); ult=ag; resto+=real*(+document.getElementById("vel").value);
+  while(resto>=1){ passo(); resto-=1 } render(); requestAnimationFrame(loop) }
+document.getElementById("I").oninput=()=>{};
+document.querySelectorAll("button[data-i]").forEach(b=>b.onclick=()=>{ document.getElementById("I").value=b.dataset.i });
+document.getElementById("pico").onclick=()=>{ S.pico=10 };
+document.getElementById("reset").onclick=()=>{ reset(); document.getElementById("I").value=0 };
+const vel=document.getElementById("vel"); vel.oninput=()=>document.getElementById("velt").textContent=vel.value+" s simulados por segundo"; vel.oninput();
+window.__passo=passo; window.__S=()=>S;
+reset(); requestAnimationFrame(loop);
+</script></body></html>

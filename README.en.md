@@ -22,6 +22,8 @@ interactive dashboard.
 
 ![Dashboard with the model tab open](docs/preview.png)
 
+![Play tab: the live test bench](docs/brinque.png)
+
 > The interface is in Portuguese. Main terms: *carga/descarga* = charge/discharge,
 > *estado de carga (SOC)* = state of charge, *célula* = cell, *chave* = switch.
 
@@ -84,6 +86,7 @@ with a full battery). Protection decisions apply on the next second, as on a mic
 
 | Tab | What you can do | Result with default values |
 |---|---|---|
+| Brinque (play) | be the test bench: turn the current, change temperature, fire a 15 A spike, toggle hysteresis | all live in the browser: cells filling and draining, switches opening, true vs estimated SOC |
 | O modelo (model) | equations, parameters and the OCV curve with its hysteresis band | 18 mV ÷ 1.2 mV/% ≈ 15% potential error |
 | Carga e descarga (charge/discharge) | change charge and discharge rates, compare with and without hysteresis | 2.92 Ah at 1C; curves shifted ±18 mV; cell 2 ends the discharge |
 | Histerese (hysteresis) | change M, M₀ and γ in the slow test (C/10) | 24 mV gap without hysteresis, 60 mV with: a 36 mV difference = 2·(M + M₀) |
@@ -169,7 +172,8 @@ streamlit run app.py
 ## Layout
 
 ```
-app.py                  Streamlit dashboard (six tabs)
+app.py                  Streamlit dashboard (seven tabs)
+brinque.html            Play tab live bench (the same model in JavaScript)
 bms.py                  cell, sensors, filters, protection, EKF and bench tests
 tests/test_bms.py       14 tests
 .streamlit/config.toml  visual theme

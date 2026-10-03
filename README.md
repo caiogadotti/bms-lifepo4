@@ -22,6 +22,8 @@ estado de carga, num painel interativo.
 
 ![Painel com a aba do modelo aberta](docs/preview.png)
 
+![Aba Brinque: a bancada ao vivo](docs/brinque.png)
+
 ---
 
 ## O problema
@@ -81,6 +83,7 @@ cheia). A decisão da proteção vale no segundo seguinte, como num microcontrol
 
 | Aba | O que dá para fazer | Resultado com os valores padrão |
 |---|---|---|
+| Brinque | ser a bancada: girar a corrente, mudar a temperatura, provocar pico de 15 A, ligar e desligar a histerese | tudo ao vivo no navegador: células enchendo e esvaziando, chaves abrindo, SOC real contra o estimado |
 | O modelo | equações, parâmetros e a curva OCV com a faixa de histerese | 18 mV ÷ 1,2 mV/% ≈ 15% de erro em potencial |
 | Carga e descarga | mudar a taxa de carga e descarga, comparar com e sem histerese | 2,92 Ah a 1C; curvas deslocadas ±18 mV; a célula 2 encerra a descarga |
 | Histerese | mexer em M, M₀ e γ no ensaio lento (C/10) | separação de 24 mV sem histerese e 60 mV com: diferença de 36 mV = 2·(M + M₀) |
@@ -166,7 +169,8 @@ streamlit run app.py
 ## Estrutura
 
 ```
-app.py                  painel Streamlit (seis abas)
+app.py                  painel Streamlit (sete abas)
+brinque.html            bancada ao vivo da aba Brinque (o mesmo modelo em JavaScript)
 bms.py                  célula, sensores, filtros, proteção, EKF e ensaios de bancada
 tests/test_bms.py       14 testes
 .streamlit/config.toml  tema visual

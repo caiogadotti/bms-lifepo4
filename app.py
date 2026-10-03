@@ -1,3 +1,7 @@
+import json
+from dataclasses import asdict
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -93,11 +97,23 @@ def descarga(kw, c, semente):
 
 SEM = dict(hyst_planta=False, hyst_ekf=False)
 
-tabs = st.tabs(["🔋 O modelo", "📈 Carga e descarga", "🔁 Histerese", "🎯 Estado de carga (EKF)",
+tabs = st.tabs(["🎮 Brinque", "🔋 O modelo", "📈 Carga e descarga", "🔁 Histerese", "🎯 Estado de carga (EKF)",
                 "🛡️ Filtros e proteção", "⚡ Taxa de descarga"])
 
-# ---------------------------------------------------------------- modelo
+# ---------------------------------------------------------------- brinque
 with tabs[0]:
+    st.markdown("### Bancada ao vivo")
+    st.caption("O mesmo modelo de célula, sensores, filtros, proteção e filtro de Kalman, rodando em tempo real no "
+               "seu navegador. O pack começa cheio e o filtro começa achando que está em 80%.")
+    pr = b.Params()
+    dados = {k: (v.tolist() if isinstance(v, np.ndarray) else list(v) if isinstance(v, tuple) else v)
+             for k, v in asdict(pr).items()}
+    dados.update(R0m=float(np.mean(pr.R0)), eta=pr.eta_carga)
+    html = (Path(__file__).parent / "brinque.html").read_text(encoding="utf-8").replace("__DADOS__", json.dumps(dados))
+    st.iframe(html, height=820)
+
+# ---------------------------------------------------------------- modelo
+with tabs[1]:
     st.markdown('<div class="flow"><span>Fonte (bancada)</span><i>→</i><span class="on">Bateria 4S</span><i>→</i>'
                 '<span>Sensores com ruído</span><i>→</i><span>Filtros</span><i>→</i><span>Proteção</span><i>↺</i>'
                 '<span>chaves de carga e descarga</span></div>', unsafe_allow_html=True)
@@ -143,7 +159,7 @@ with tabs[0]:
                   "A aba 🎯 mostra isso acontecendo.")
 
 # ---------------------------------------------------------------- carga e descarga
-with tabs[1]:
+with tabs[2]:
     c1, c2 = st.columns(2)
     cd = c1.select_slider("Corrente de descarga", [0.5, 1.0, 1.5, 2.0], 1.0, format_func=lambda v: f"{v:g}C")
     cc = c2.select_slider("Corrente de carga (fase CC)", [0.25, 0.5, 1.0], 0.5, format_func=lambda v: f"{v:g}C")
@@ -195,7 +211,7 @@ with tabs[1]:
                 unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- histerese
-with tabs[2]:
+with tabs[3]:
     st.markdown("### O mesmo SOC, duas tensões")
     st.markdown('<div class="box">Carregando e descarregando bem devagar (C/10), a queda nas resistências fica pequena. '
                 'O que sobra de diferença entre a curva de carga e a de descarga é a <b>histerese</b>. No LFP ela vem '
@@ -235,7 +251,7 @@ with tabs[2]:
                   "sem histerese são só a resistência interna.")
 
 # ---------------------------------------------------------------- SOC
-with tabs[3]:
+with tabs[4]:
     st.markdown("### Quanto de carga tem a bateria?")
     st.markdown('<div class="box">SOC não se mede, se estima. O <b>filtro de Kalman estendido</b> prevê o SOC contando a '
                 'corrente e corrige olhando a tensão medida: se a tensão veio diferente do que o modelo esperava, a '
@@ -280,7 +296,7 @@ with tabs[3]:
                 unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- filtros e proteção
-with tabs[4]:
+with tabs[5]:
     st.markdown("### Filtrar sem ficar lento, proteger sem alarme falso")
     st.markdown('<div class="box">Ensaio de 3 h com uso normal (±1 A) e falhas provocadas: <b>regeneração de −6 A</b> '
                 '(2C de carga) aos 600 s, <b>pico de 15 A</b> (5C) aos 1500 s e o <b>ambiente esquentando</b> de 25 °C '
@@ -344,7 +360,7 @@ with tabs[4]:
                     'bem mais rápida que qualquer filtro digital.</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- C-rate
-with tabs[5]:
+with tabs[6]:
     st.markdown("### Quanto mais corrente, menos bateria")
     st.markdown('<div class="box">1C é a corrente que esvaziaria a bateria em uma hora (3 A); 2C, em meia hora. '
                 'Mais corrente é mais queda dentro da célula: a curva desce, bate em 2,50 V antes e a célula '
