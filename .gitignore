@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+node_modules/
+package*.json
+deck.js
+roteiro.py
+gerar_graficos.py
+graficos/
+.claudeignore
+*.log
+
+PROGRESSO.md
+.pytest_cache/
