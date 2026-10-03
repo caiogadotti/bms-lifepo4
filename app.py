@@ -10,49 +10,48 @@ import streamlit as st
 
 import bms as b
 
-TEAL, AMB, DARK, RED, GRAY, BLUE = "#0F766E", "#F59E0B", "#0B2E2B", "#DC2626", "#94A3B8", "#2563EB"
-CEL = ["#0F766E", "#DC2626", "#2563EB", "#9333EA"]
-st.set_page_config(page_title="BMS LiFePO4", page_icon=str(Path(__file__).parent / "icone.png"), layout="wide")
+import ui
+from ui import TEAL, DARK, RED, GRAY, BLUE, AMB_VIVO as AMB, caixa, como_ler, dica, eyebrow, lead, resultado
 
-st.markdown(f"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;600&display=swap');
-html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
-h1, h2, h3 {{ font-family: 'Instrument Serif', serif !important; font-weight: 400 !important; }}
-.hero {{ background: {DARK}; color: #fff; padding: 28px 32px; border-radius: 18px; margin-bottom: 18px; }}
-.hero h1 {{ color: #fff; margin: 0; font-size: 2.8rem !important; }}
-.hero p {{ color: #99F6E4; font-size: 1.1rem; margin: 6px 0 0; }}
-.box {{ background: #E6F2F1; color: #1E293B; border-radius: 14px; padding: 14px 18px; margin-bottom: 12px; }}
-.box b {{ color: {TEAL}; }}
-.eyebrow {{ color: {TEAL}; font-weight: 600; letter-spacing: .12em; font-size: .78rem; text-transform: uppercase; }}
-.result {{ background: {DARK}; color: #fff; border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; }}
-.result .num {{ font-family: 'Instrument Serif', serif; font-size: 2.4rem; color: {AMB}; line-height: 1.1; }}
-div[data-testid="stMetric"] {{ background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px 14px; }}
-.stTabs [data-baseweb="tab"] {{ font-size: 1rem; padding: 10px 16px; }}
-.stTabs [data-baseweb="tab-list"] {{ flex-wrap: wrap; }}
-.hint {{ color:#475569; font-size:.95rem; background:#FFF7ED; border-radius:10px; padding:10px 14px; margin-top:10px; }}
-.flow {{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 14px; }}
-.flow span {{ background:#E6F2F1; color:#1E293B; border-radius:12px; padding:10px 14px; font-weight:600; }}
-.flow span.on {{ background:{TEAL}; color:#fff; }}
-.flow i {{ color:{GRAY}; font-style:normal; font-size:1.3rem; }}
+CEL = ["#0F766E", "#B91C1C", "#1D4ED8", "#7C3AED"]
+st.set_page_config(page_title="BMS LiFePO4 · simulação", page_icon=str(Path(__file__).parent / "icone.png"), layout="wide")
+ui.aplicar()
+st.markdown("""<style>
+.flow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 14px; }
+.flow span { background:#F1F7F6; border:1px solid #D5E8E5; color:#1E293B; border-radius:10px; padding:9px 13px; font-weight:500; font-size:.92rem; }
+.flow span.on { background:#0F766E; border-color:#0F766E; color:#fff; }
+.flow i { color:#94A3B8; font-style:normal; font-size:1.2rem; }
 </style>""", unsafe_allow_html=True)
 
-st.markdown("""<div class="hero"><h1>🔋 BMS para células LiFePO4</h1>
-<p>Bateria virtual, sensores com ruído, filtros, proteção e filtro de Kalman, com e sem a histerese do LFP</p>
-<p style="color:#CBD5E1;font-size:.95rem;margin-top:14px">Caio Gadotti · Projeto da faculdade · ESCF, Engenharia de Sistemas Ciberfísicos · PUC-SP</p></div>""",
-            unsafe_allow_html=True)
+ui.hero("Sistemas embarcados · estimação de estado",
+        "BMS para células LiFePO4",
+        "Uma bancada virtual para um pack de quatro células: a bateria, os sensores com ruído, os filtros, a proteção "
+        "e um filtro de Kalman que tenta adivinhar quanta carga resta. A pergunta central é o que acontece quando o "
+        "BMS ignora a histerese, um efeito de 18 mV que no LiFePO4 vale até 15 pontos de carga.",
+        [("pack", "4S · 12,8 V · 3 Ah"), ("passo", "1 s"), ("erro de SOC", "0,4% → 7,0%"), ("testes", "14")],
+        "Caio Gadotti · Projeto da faculdade · Engenharia de Sistemas Ciberfísicos (ESCF) · PUC-SP")
+ui.escopo(
+    "Medir o estado de carga (SOC) de uma bateria não é possível: só dá para estimar a partir de tensão, corrente e "
+    "temperatura, todas com ruído. No LiFePO4 isso é difícil porque a tensão quase não muda entre 10% e 90% de carga "
+    "e ainda depende de a célula estar carregando ou descarregando (histerese). O trabalho mede quanto essa histerese "
+    "atrapalha o estimador e testa se o BMS protege o pack quando algo sai do limite.",
+    ["Célula por circuito equivalente 2RC + histerese de Plett, com efeito de temperatura (Arrhenius) e aquecimento",
+     "Pack 4S com células diferentes entre si (2,94 a 3,05 Ah)",
+     "Sensores com ruído, offset e quantização de ADC",
+     "Filtro passa-baixa, proteção com 8 falhas, debounce e rearme",
+     "Filtro de Kalman estendido (EKF) por célula, com e sem modelo de histerese",
+     "Ensaios: ciclo CC/CV, ensaio lento C/10, falhas provocadas e taxas de descarga"],
+    ["Balanceamento das células",
+     "Envelhecimento e perda de capacidade ao longo dos ciclos",
+     "Parâmetros medidos em célula real: vêm de datasheet e literatura",
+     "Hardware (microcontrolador, MOSFETs) e proteção contra curto-circuito",
+     "Estimadores alternativos (UKF, filtro de partículas)"])
 
 
 def layout(fig, h=360, **kw):
-    fig.update_layout(height=h, margin=dict(l=10, r=10, t=30, b=10), plot_bgcolor="#fff", paper_bgcolor="#fff",
-                      font=dict(family="Inter", color="#1E293B"), legend=dict(orientation="h", y=1.14), **kw)
-    fig.update_xaxes(gridcolor="#F1F5F9")
-    fig.update_yaxes(gridcolor="#F1F5F9")
+    kw.setdefault("hovermode", "x unified")
+    fig.update_layout(height=h, **kw)
     return fig
-
-
-def resultado(num, texto):
-    st.markdown(f'<div class="result"><div class="num">{num}</div>{texto}</div>', unsafe_allow_html=True)
 
 
 def passo(x, n=1500):
@@ -61,16 +60,17 @@ def passo(x, n=1500):
 
 with st.sidebar:
     st.markdown("### O pack")
-    st.markdown("""**4S1P · 12,8 V · 3,0 Ah**
-Células 26650 LiFePO4 com capacidades de 2,94 a 3,05 Ah, para o pack ter uma célula mais fraca, como na vida real.
-
-**Carga:** CC 0,5C até 3,65 V + CV até C/20
-**Descarga:** até 2,50 V na célula mais fraca
-**Corrente positiva = descarga**""")
+    st.markdown("""
+- **4S1P**: 4 células em série, 12,8 V, 3,0 Ah, 38,4 Wh
+- **Células 26650 LiFePO4** de 2,94 a 3,05 Ah, diferentes de propósito
+- **Carga:** CC 0,5C até 3,65 V, depois CV até C/20
+- **Descarga:** até 2,50 V na célula mais fraca
+- **Sinal:** corrente positiva é descarga
+""")
     st.divider()
-    st.markdown("**Ensaios simulados com passo de 1 s.** Cada mudança nos controles roda a bancada de novo "
-                "(alguns segundos).")
-    semente = st.number_input("Semente do ruído dos sensores", 0, 999, 0)
+    st.markdown("**Ensaios com passo de 1 s.** Mexer num controle roda a bancada de novo, o que leva alguns segundos.")
+    semente = st.number_input("Semente do ruído dos sensores", 0, 999, 0,
+                              help="Muda o sorteio do ruído. Os resultados variam pouco de uma semente para outra, o que mostra que não dependem de sorte.")
     st.divider()
     st.markdown("**Caio Gadotti**  \nProjeto da faculdade · ESCF (Engenharia de Sistemas Ciberfísicos), PUC-SP")
 
@@ -97,20 +97,34 @@ def descarga(kw, c, semente):
 
 SEM = dict(hyst_planta=False, hyst_ekf=False)
 
-tabs = st.tabs(["🎮 Brinque", "🔋 O modelo", "📈 Carga e descarga", "🔁 Histerese", "🎯 Estado de carga (EKF)",
-                "🛡️ Filtros e proteção", "⚡ Taxa de descarga"])
+tabs = st.tabs([":material/sports_esports: Brinque", ":material/schema: O modelo", ":material/show_chart: Carga e descarga",
+                ":material/sync_alt: Histerese", ":material/my_location: Estado de carga (EKF)",
+                ":material/shield: Filtros e proteção", ":material/speed: Taxa de descarga"])
 
 # ---------------------------------------------------------------- brinque
 with tabs[0]:
     st.markdown("### Bancada ao vivo")
-    st.caption("O mesmo modelo de célula, sensores, filtros, proteção e filtro de Kalman, rodando em tempo real no "
-               "seu navegador. O pack começa cheio e o filtro começa achando que está em 80%.")
+    lead("O mesmo modelo de célula, sensores, filtros, proteção e filtro de Kalman, rodando em tempo real no seu "
+         "navegador. O pack começa cheio e o filtro começa achando que está em 80%. As outras abas rodam ensaios "
+         "fechados e medem os resultados.")
     pr = b.Params()
     dados = {k: (v.tolist() if isinstance(v, np.ndarray) else list(v) if isinstance(v, tuple) else v)
              for k, v in asdict(pr).items()}
     dados.update(R0m=float(np.mean(pr.R0)), eta=pr.eta_carga)
     html = (Path(__file__).parent / "brinque.html").read_text(encoding="utf-8").replace("__DADOS__", json.dumps(dados))
     st.iframe(html, height=820)
+    como_ler([
+        ("Corrente", "A · + descarga", "O que a bancada pede ao pack. Positivo tira energia da bateria, negativo carrega. "
+         "Se a chave daquele sentido estiver aberta, a corrente real vira zero."),
+        ("Barra verde da célula", "SOC real, %", "Quanta carga a célula tem de verdade. Só o simulador conhece esse valor."),
+        ("Tracejado amarelo", "SOC do EKF, %", "O que o BMS acha que a célula tem. Começa em 80% de propósito e precisa convergir."),
+        ("Tensão da célula", "V", "Tensão nos terminais, já com a queda nas resistências internas e o efeito da histerese."),
+        ("Temperatura", "°C", "Esquenta pelas perdas I²R e troca calor com o ambiente. Verde abaixo de 35 °C, amarelo até 45 °C, vermelho acima."),
+        ("Chaves", "aberta / fechada", "MOSFETs de carga e de descarga, separados: dá para bloquear só a carga e deixar a bateria descarregar."),
+        ("Alarmes", "8 falhas", "Acendem quando o valor filtrado passa do limite por algumas amostras seguidas. Só apagam depois de 60 s dentro da faixa."),
+        ("Erro do SOC estimado", "pontos percentuais", "SOC do EKF menos SOC real, na célula 2. Desligue a histerese no filtro e veja esse número crescer."),
+        ("Velocidade", "s simulados por s", "Quantos segundos de bateria passam a cada segundo real. 60 = um minuto por segundo."),
+    ])
 
 # ---------------------------------------------------------------- modelo
 with tabs[1]:
@@ -156,13 +170,30 @@ with tabs[1]:
         resultado("18 mV ÷ 1,2 mV/% ≈ 15%",
                   "No meio da curva a tensão do LFP muda só 1,2 mV por ponto de SOC. Os 18 mV da histerese, se o "
                   "estimador não souber deles, viram cerca de 15 pontos de erro no estado de carga. "
-                  "A aba 🎯 mostra isso acontecendo.")
+                  "A aba Estado de carga mostra isso acontecendo.")
+    como_ler([
+        ("SOC (z)", "0 a 1", "Estado de carga: fração da capacidade que ainda está na célula."),
+        ("OCV(z)", "V", "Tensão de circuito aberto: a tensão da célula em repouso total, sem corrente e sem histerese."),
+        ("R₀", "mΩ", "Resistência ôhmica. Dá a queda imediata quando a corrente muda. Cresce no frio e perto de vazia ou cheia."),
+        ("R₁C₁, R₂C₂", "mΩ · s", "Dois ramos RC que imitam a difusão dentro da célula. Por causa deles a tensão continua mudando depois que a corrente para."),
+        ("h, M, M₀", "−1 a 1 · mV", "Histerese. h vai a +1 depois de carregar e a −1 depois de descarregar; M é o tamanho desse efeito; M₀ é a parte que muda na hora."),
+        ("γ", "adimensional", "Quão rápido h troca de lado quando a corrente inverte."),
+        ("η", "≈ 0,999", "Eficiência coulômbica na carga: um pouco da carga que entra não fica guardada."),
+        ("Cth, hA", "J/K · W/K", "Capacidade térmica da célula e troca de calor com o ar. Juntas definem quanto e quão rápido ela esquenta."),
+        ("C (taxa)", "1C = 3 A", "Corrente em múltiplos da capacidade. 1C esvaziaria a bateria em 1 hora, 0,5C em 2 horas."),
+    ])
 
 # ---------------------------------------------------------------- carga e descarga
 with tabs[2]:
+    st.markdown("### Um ciclo completo: descarga, repouso e carga")
+    lead("A bancada descarrega o pack até a célula mais fraca chegar em 2,50 V, espera 30 minutos e recarrega em "
+         "corrente constante (CC) até 3,65 V, segurando a tensão (CV) até a corrente cair a C/20. O ciclo roda duas "
+         "vezes, com e sem histerese, para comparar.")
     c1, c2 = st.columns(2)
-    cd = c1.select_slider("Corrente de descarga", [0.5, 1.0, 1.5, 2.0], 1.0, format_func=lambda v: f"{v:g}C")
-    cc = c2.select_slider("Corrente de carga (fase CC)", [0.25, 0.5, 1.0], 0.5, format_func=lambda v: f"{v:g}C")
+    cd = c1.select_slider("Corrente de descarga", [0.5, 1.0, 1.5, 2.0], 1.0, format_func=lambda v: f"{v:g}C",
+                          help="1C = 3 A, esvaziaria a bateria em uma hora.")
+    cc = c2.select_slider("Corrente de carga (fase CC)", [0.25, 0.5, 1.0], 0.5, format_func=lambda v: f"{v:g}C",
+                          help="Corrente usada até a primeira célula chegar a 3,65 V.")
     with st.spinner("Rodando o ciclo com e sem histerese..."):
         rc = ciclo((), cd, cc, semente)
         rs = ciclo(tuple(SEM.items()), cd, cc, semente)
@@ -172,11 +203,15 @@ with tabs[2]:
     desloc = 1000 * (np.median(rs["V"][ds][:, 0]) - np.median(rc["V"][d][:, 0]))
     k = st.columns(4)
     k[0].metric("Capacidade descarregada", f"{ah_d:.2f} Ah", f"sem histerese {rs['I'][ds].sum() / 3600:.2f} Ah",
-                delta_color="off", delta_arrow="off")
-    k[1].metric("Deslocamento pela histerese", f"±{desloc:.0f} mV", delta_color="off")
-    k[2].metric("Temperatura máxima", f"{rc['T'].max():.1f} °C", "ambiente 25 °C", delta_color="off", delta_arrow="off")
+                delta_color="off", delta_arrow="off",
+                help="Carga que saiu do pack até a célula mais fraca bater em 2,50 V. Fica abaixo dos 2,94 Ah dela porque a queda na resistência leva a tensão ao limite antes de a célula esvaziar.")
+    k[1].metric("Deslocamento pela histerese", f"±{desloc:.0f} mV",
+                help="Diferença mediana entre a curva de descarga com e sem histerese. Na carga o deslocamento é o mesmo, para cima.")
+    k[2].metric("Temperatura máxima", f"{rc['T'].max():.1f} °C", "ambiente 25 °C", delta_color="off", delta_arrow="off",
+                help="Célula mais quente em todo o ciclo, aquecida pelas perdas I²R.")
     k[3].metric("Ciclo completo", f"{rc['t'][-1] / 3600:.1f} h", f"CV: {(rc['t'][-1] - rc['t_cv']) / 60:.0f} min",
-                delta_color="off", delta_arrow="off")
+                delta_color="off", delta_arrow="off",
+                help="Descarga + 30 min de repouso + carga CC/CV. A fase CV é a parte final, com a tensão parada em 3,65 V e a corrente caindo.")
 
     a, c2 = st.columns(2)
     with a:
@@ -209,6 +244,14 @@ with tabs[2]:
                 f'{rc["V"][np.where(d)[0][-1]][[0, 2, 3]].max():.2f} V, ainda com carga. No repouso a tensão sobe sozinha '
                 '(os ramos RC relaxando). A histerese desloca as curvas mas quase não mexe na capacidade.</div>',
                 unsafe_allow_html=True)
+    como_ler([
+        ("Carga movimentada", "Ah", "Carga que entrou ou saiu desde o começo daquela fase. As duas curvas começam em zero para dar para comparar."),
+        ("Patamar", "≈ 3,1 a 3,35 V", "A parte plana da curva, onde fica a maior parte da energia do LFP."),
+        ("Joelho", "fim da curva", "Onde a tensão despenca (perto de vazia) ou dispara (perto de cheia)."),
+        ("Fase CC", "corrente fixa", "Carga com corrente constante até a primeira célula chegar a 3,65 V."),
+        ("Fase CV", "tensão fixa", "O carregador segura 3,65 V e a corrente vai caindo; termina em C/20 (0,15 A)."),
+        ("Célula mais fraca", "célula 2 · 2,94 Ah", "Define o fim da descarga do pack inteiro, mesmo com as outras ainda com carga."),
+    ])
 
 # ---------------------------------------------------------------- histerese
 with tabs[3]:
@@ -218,9 +261,12 @@ with tabs[3]:
                 'das partículas mudando de fase uma a uma: carga e descarga seguem caminhos diferentes.</div>',
                 unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    M = c1.slider("M: histerese dinâmica (mV)", 0, 40, 15) / 1000
-    M0 = c2.slider("M₀: histerese instantânea (mV)", 0, 10, 3) / 1000
-    gama = c3.slider("γ: velocidade de troca do estado h", 10, 200, 60, 10)
+    M = c1.slider("M: histerese dinâmica (mV)", 0, 40, 15,
+                  help="Quanto a tensão se desloca depois de a célula passar um tempo carregando ou descarregando.") / 1000
+    M0 = c2.slider("M₀: histerese instantânea (mV)", 0, 10, 3,
+                   help="Parte da histerese que troca de lado na hora em que a corrente muda de sentido.") / 1000
+    gama = c3.slider("γ: velocidade de troca do estado h", 10, 200, 60, 10,
+                     help="Maior γ = h chega a ±1 com menos carga movimentada.")
     with st.spinner("Ensaio lento (C/10, ~20 h simuladas)..."):
         rl = lento((("M", M), ("M0", M0), ("gama", float(gama))))
         rl0 = lento(tuple(SEM.items()))
@@ -243,12 +289,19 @@ with tabs[3]:
     with c2:
         s0, s1 = separacao(rl0), separacao(rl)
         k = st.columns(2)
-        k[0].metric("Separação sem histerese", f"{s0:.0f} mV")
-        k[1].metric("Separação com histerese", f"{s1:.0f} mV")
+        k[0].metric("Separação sem histerese", f"{s0:.0f} mV",
+                    help="Distância média entre a curva de carga e a de descarga entre 20% e 80% de SOC. Sem histerese, sobra só a queda nas resistências.")
+        k[1].metric("Separação com histerese", f"{s1:.0f} mV", help="A mesma distância com a histerese ligada.")
         resultado(f"{s1 - s0:.0f} mV",
                   f"é a diferença entre os laços, igual a 2·(M + M₀) = {2000 * (M + M0):.0f} mV. Com os valores padrão "
                   "fica em 36 mV, na faixa medida em células LFP reais (Roscher e Sauer, 2011). Os 24 mV que sobram "
                   "sem histerese são só a resistência interna.")
+    como_ler([
+        ("C/10", "0,3 A", "Corrente bem baixa: a carga leva 10 horas. Assim a queda nas resistências fica pequena e a histerese aparece."),
+        ("Laço", "curva fechada", "O caminho de descarga fica embaixo e o de carga em cima. A distância entre eles é o que se mede."),
+        ("Separação", "mV", "Média da distância entre os dois caminhos, de 20% a 80% de SOC."),
+        ("2·(M + M₀)", "mV", "O quanto a histerese abre o laço: M + M₀ para cima na carga e o mesmo para baixo na descarga."),
+    ])
 
 # ---------------------------------------------------------------- SOC
 with tabs[4]:
@@ -259,9 +312,12 @@ with tabs[4]:
                 'Três cenários:<br>(a) bateria sem histerese · (b) bateria com histerese, filtro não sabe · '
                 '(c) os dois com histerese.</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    z0 = c1.slider("SOC inicial do filtro (a bateria começa cheia)", 50, 100, 80, 5) / 100
-    off = c2.slider("Offset do sensor de corrente (mA)", 0, 60, 15, 5) / 1000
-    sv = c3.slider("Ruído do sensor de tensão σ (mV)", 0.5, 8.0, 2.0, 0.5) / 1000
+    z0 = c1.slider("SOC inicial do filtro (%)", 50, 100, 80, 5,
+                   help="O chute inicial do filtro. A bateria começa cheia (100%), então 80% é um erro de 20 pontos.") / 100
+    off = c2.slider("Offset do sensor de corrente (mA)", 0, 60, 15, 5,
+                    help="Erro fixo do sensor de corrente. Na contagem de Coulomb ele acumula sem parar.") / 1000
+    sv = c3.slider("Ruído do sensor de tensão σ (mV)", 0.5, 8.0, 2.0, 0.5,
+                   help="Desvio-padrão do ruído na leitura de tensão de cada célula.") / 1000
     base = (("soc_ekf0", z0), ("off_I", off), ("sig_V", sv))
     with st.spinner("Rodando os três cenários..."):
         cen = {"(a) sem histerese": ciclo(base + tuple(SEM.items()), semente=semente),
@@ -291,9 +347,17 @@ with tabs[4]:
     st.caption("Erro RMS a partir de 10 min (o tempo de o filtro convergir do chute inicial), nas 4 células.")
     st.markdown(f'<div class="hint">Sem saber da histerese, o filtro vê uma tensão 18 mV fora do que esperava e '
                 f'"explica" a diferença mexendo no SOC: o pico de {t.iloc[1]["Pico (pp)"]:.0f}% é a conta de 15% da aba '
-                f'🔋 acontecendo. Só contar corrente termina com {t.iloc[2]["Contagem de Coulomb no fim (pp)"]:.0f} '
+                f'O modelo acontecendo. Só contar corrente termina com {t.iloc[2]["Contagem de Coulomb no fim (pp)"]:.0f} '
                 'pontos de erro: não corrige o chute inicial e ainda acumula o offset do sensor.</div>',
                 unsafe_allow_html=True)
+    como_ler([
+        ("Erro de SOC", "pontos percentuais (pp)", "SOC estimado menos SOC real. +5 pp quer dizer que o BMS acha que tem 5% a mais do que tem."),
+        ("Erro RMS", "pp", "Raiz da média dos erros ao quadrado, depois dos 10 primeiros minutos. Resume o erro típico do ciclo inteiro."),
+        ("Pico", "pp", "Maior erro em módulo depois dos 10 primeiros minutos: o pior momento."),
+        ("Contagem de Coulomb", "integral da corrente", "Somar a corrente medida no tempo. Simples, mas não corrige o chute inicial e acumula o offset do sensor."),
+        ("EKF", "filtro de Kalman estendido", "Prevê com a contagem de Coulomb e corrige com a tensão medida, pesando qual dos dois está mais confiável."),
+        ("Cenário (b)", "planta ≠ modelo", "A bateria tem histerese e o filtro não sabe. Ele atribui ao SOC um desvio de tensão que na verdade é histerese."),
+    ])
 
 # ---------------------------------------------------------------- filtros e proteção
 with tabs[5]:
@@ -303,8 +367,10 @@ with tabs[5]:
                 'a 75 °C a partir de 1 h. Cada falha só dispara se durar algumas amostras seguidas (debounce) e só '
                 'rearma depois de 60 s dentro da faixa.</div>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
-    tauI = c1.slider("τ do filtro de corrente e tensão (s)", 0.5, 10.0, 2.0, 0.5)
-    tauT = c2.slider("τ do filtro de temperatura (s)", 2.0, 30.0, 10.0, 1.0)
+    tauI = c1.slider("τ do filtro de corrente e tensão (s)", 0.5, 10.0, 2.0, 0.5,
+                     help="Constante de tempo do passa-baixa. Maior τ = sinal mais limpo e resposta mais lenta.")
+    tauT = c2.slider("τ do filtro de temperatura (s)", 2.0, 30.0, 10.0, 1.0,
+                     help="Temperatura muda devagar, então aguenta um filtro mais pesado sem perder nada.")
     with st.spinner("Rodando o ensaio de falhas..."):
         rf = falhas((("tauI", tauI), ("tauV", tauI), ("tauT", tauT)), semente)
     f = rf["falhas"]
@@ -358,6 +424,15 @@ with tabs[5]:
                     'descarregar; a 60 °C bloqueia tudo. Com τ muito curto o ruído passa e a proteção fica nervosa; '
                     'com τ muito longo a detecção atrasa. Curto-circuito precisa de proteção em hardware, '
                     'bem mais rápida que qualquer filtro digital.</div>', unsafe_allow_html=True)
+    como_ler([
+        ("τ (tau)", "s", "Constante de tempo do filtro passa-baixa: depois de τ segundos o sinal filtrado percorreu 63% de um degrau."),
+        ("Medida / filtrada", "A", "Cinza é o que o sensor leu (com ruído e offset); azul é o que o BMS usa para decidir."),
+        ("Pedida / real", "A", "Pontilhado é o que a bancada pediu; verde é o que passou de fato. Quando a chave abre, a real vai a zero."),
+        ("Debounce", "3 a 5 amostras", "A falha precisa ficar ativa algumas leituras seguidas. Evita disparo por um único pico de ruído."),
+        ("Rearme", "60 s", "Depois de disparar, a falha só limpa quando o valor passa 60 s dentro da faixa com folga."),
+        ("Detectada (s)", "s", "Instante em que a falha disparou. A diferença para o evento é o atraso do filtro mais o debounce."),
+        ("Ruído (desvio-padrão)", "mA · °C", "Espalhamento do sinal em torno do valor real, antes e depois do filtro, num trecho sem eventos."),
+    ])
 
 # ---------------------------------------------------------------- C-rate
 with tabs[6]:
@@ -365,7 +440,8 @@ with tabs[6]:
     st.markdown('<div class="box">1C é a corrente que esvaziaria a bateria em uma hora (3 A); 2C, em meia hora. '
                 'Mais corrente é mais queda dentro da célula: a curva desce, bate em 2,50 V antes e a célula '
                 'esquenta mais.</div>', unsafe_allow_html=True)
-    rates = st.multiselect("Taxas", [0.2, 0.5, 1.0, 2.0, 3.0], [0.5, 1.0, 2.0], format_func=lambda v: f"{v:g}C")
+    rates = st.multiselect("Taxas de descarga para comparar", [0.2, 0.5, 1.0, 2.0, 3.0], [0.5, 1.0, 2.0],
+                           format_func=lambda v: f"{v:g}C ({3 * v:g} A)")
     if rates:
         with st.spinner("Descarregando em cada taxa..."):
             res = {c: descarga((), c, semente) for c in sorted(rates)}
@@ -392,3 +468,12 @@ with tabs[6]:
                           f"de tensão média e {100 * (t['Capacidade (Ah)'].iloc[-1] / t['Capacidade (Ah)'].iloc[0] - 1):.0f}% "
                           f"de capacidade de {t['Taxa'].iloc[0]} para {t['Taxa'].iloc[-1]}; "
                           f"a célula chega a {t['Temperatura máx. (°C)'].iloc[-1]:.1f} °C.")
+    else:
+        st.info("Escolha pelo menos uma taxa para comparar.", icon=":material/touch_app:")
+    como_ler([
+        ("Taxa (C)", "1C = 3 A", "Corrente em múltiplos da capacidade nominal."),
+        ("Capacidade", "Ah", "Carga entregue até a célula 2 chegar a 2,50 V. Cai com corrente maior porque o limite chega antes."),
+        ("Tensão média", "V", "Média da tensão nos terminais durante a descarga. Mais corrente, mais queda interna, tensão menor."),
+        ("Temperatura máx.", "°C", "Aquecimento por I²R: dobrar a corrente quadruplica a potência perdida."),
+        ("Duração", "min", "Tempo até o corte. A 2C, um pouco menos de meia hora."),
+    ])
