@@ -12,7 +12,7 @@ import bms as b
 
 TEAL, AMB, DARK, RED, GRAY, BLUE = "#0F766E", "#F59E0B", "#0B2E2B", "#DC2626", "#94A3B8", "#2563EB"
 CEL = ["#0F766E", "#DC2626", "#2563EB", "#9333EA"]
-st.set_page_config(page_title="BMS LiFePO4", page_icon="🔋", layout="wide")
+st.set_page_config(page_title="BMS LiFePO4", page_icon=str(Path(__file__).parent / "icone.png"), layout="wide")
 
 st.markdown(f"""
 <style>
