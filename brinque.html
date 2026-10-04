@@ -38,6 +38,23 @@ button.perigo{border-color:#FCA5A5;color:var(--red)}
 canvas{width:100%;display:block}
 .leg{font-size:.75rem;color:#475569;margin:2px 0 0}
 @media (max-width:760px){.grid{grid-template-columns:1fr}}
+/* U1: botão com preenchimento no hover e resposta ao clique */
+button{position:relative;overflow:hidden;isolation:isolate;min-height:40px;border-radius:10px;border:1px solid #0F766E;color:#0F766E;background:#fff;
+  font-weight:600;cursor:pointer;transition:color .2s ease,transform .1s ease,box-shadow .2s ease}
+button::before{content:"";position:absolute;inset:0;background:#0F766E;transform:translateY(101%);transition:transform .22s ease-out;z-index:-1}
+button:hover{color:#fff;box-shadow:0 4px 12px #0F766E33}button:hover::before{transform:translateY(0)}
+button:active{transform:scale(.96)}button:focus-visible{outline:3px solid #F59E0B;outline-offset:2px}
+button.pri,button.on{background:#0F766E;color:#fff}button.pri::before,button.on::before{background:#0B2E2B}
+button.perigo{border-color:#DC2626;color:#B91C1C}button.perigo::before{background:#DC2626}button.perigo:hover{color:#fff;box-shadow:0 4px 12px #DC262633}
+/* U3: caixas de marcar viram chave liga/desliga */
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:40px;height:22px;border-radius:999px;background:#CBD5E1;position:relative;
+  cursor:pointer;flex:none;vertical-align:middle;transition:background .2s ease;margin:0 8px 0 0}
+input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px #0003;transition:transform .2s ease}
+input[type=checkbox]:checked{background:#0F766E}input[type=checkbox]:checked::after{transform:translateX(18px)}
+input[type=checkbox]:focus-visible{outline:3px solid #F59E0B;outline-offset:2px}
+label:has(input[type=checkbox]){display:flex;align-items:center;cursor:pointer;min-height:32px}
+@media (prefers-reduced-motion:reduce){button,button::before,input[type=checkbox],input[type=checkbox]::after{transition:none}}
 </style></head><body>
 <div class="hint">🎮 Você é a bancada. Gire a <b>corrente</b>, mude a <b>temperatura</b>, provoque falhas e veja o BMS reagir: as chaves abrem, os alarmes acendem e o tracejado amarelo (o SOC que o filtro de Kalman <i>acha</i>) persegue o SOC real. Desligue a histerese no filtro e veja ele se perder.</div>
 <div class="grid">
@@ -88,7 +105,7 @@ const gauss = () => { const u=1-Math.random(), v=Math.random(); return Math.sqrt
 const a1 = Math.exp(-Ts/P.tau1), a2 = Math.exp(-Ts/P.tau2);
 let S;
 function reset(){
-  S = { t:0, z:[1,1,1,1], i1:[0,0,0,0], i2:[0,0,0,0], h:[1,1,1,1], s:[1,1,1,1], T:[25,25,25,25],
+  S = { t:0, z:[0.98,0.98,0.98,0.98], i1:[0,0,0,0], i2:[0,0,0,0], h:[1,1,1,1], s:[1,1,1,1], T:[25,25,25,25],
         yI:null, yV:null, yT:null, f:new Array(8).fill(false), con:new Array(8).fill(0), coff:new Array(8).fill(0),
         kdis:true, kchg:true, x:[...Array(N)].map(()=>[0.8,0,0,1]), Pm:[...Array(N)].map(()=>diag([0.04,1e-4,1e-4,1])), se:[1,1,1,1],
         hist:[], pico:0, I:0, V:[3.4,3.4,3.4,3.4], cv:false };
@@ -148,7 +165,7 @@ function passo(){
   if(S.t%5===0){ S.hist.push({t:S.t,V:[...V],z:S.z[1],ze:S.x[1][0]}); if(S.hist.length>720) S.hist.shift() }
 }
 const cels=document.getElementById("cels");
-for(let c=0;c<N;c++){ cels.insertAdjacentHTML("beforeend",`<div class="cel"><b>Célula ${c+1}</b><small>${P.Q[c].toFixed(2)} Ah${c===1?" · a mais fraca":""}</small><div class="bat"><div class="fill" id="fill${c}"></div><div class="est" id="est${c}"></div></div><div class="v" id="v${c}"></div><small id="z${c}"></small><span class="temp" id="t${c}"></span></div>`) }
+for(let c=0;c<N;c++){ cels.insertAdjacentHTML("beforeend",`<div class="cel"><b>Célula ${c+1}</b><small>${P.Q[c].toFixed(2).replace(".",",")} Ah${c===1?" · a mais fraca":""}</small><div class="bat"><div class="fill" id="fill${c}"></div><div class="est" id="est${c}"></div></div><div class="v" id="v${c}"></div><small id="z${c}"></small><span class="temp" id="t${c}"></span></div>`) }
 document.getElementById("falhas").innerHTML=FAL.map((n,j)=>`<span class="fl" id="fl${j}">${n}</span>`).join("");
 function cor(T){ return T>=45?["#FEE2E2","#991B1B"]:T>=35?["#FEF3C7","#92400E"]:T<=0?["#DBEAFE","#1E40AF"]:["#DCFCE7","#166534"] }
 function grafico(id,series,ymin,ymax,linhas){

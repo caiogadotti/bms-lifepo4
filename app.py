@@ -29,7 +29,9 @@ ui.hero("Sistemas embarcados · estimação de estado",
         "e um filtro de Kalman que tenta adivinhar quanta carga resta. A pergunta central é o que acontece quando o "
         "BMS ignora a histerese, um efeito de 18 mV que no LiFePO4 vale até 15 pontos de carga.",
         [("pack", "4S · 12,8 V · 3 Ah"), ("passo", "1 s"), ("erro de SOC", "0,4% → 7,0%"), ("testes", "14")],
-        "Caio Gadotti · Projeto da faculdade · Engenharia de Sistemas Ciberfísicos (ESCF) · PUC-SP")
+        "Caio Gadotti · Projeto da faculdade · Engenharia de Sistemas Ciberfísicos (ESCF) · PUC-SP",
+        links=[("Código no GitHub", "https://github.com/caiogadotti/bms-lifepo4"),
+               ("Como funciona (README)", "https://github.com/caiogadotti/bms-lifepo4#readme")])
 ui.escopo(
     "Medir o estado de carga (SOC) de uma bateria não é possível: só dá para estimar a partir de tensão, corrente e "
     "temperatura, todas com ruído. No LiFePO4 isso é difícil porque a tensão quase não muda entre 10% e 90% de carga "
@@ -106,7 +108,7 @@ with tabs[0]:
     if tabs[0].open:
         st.markdown("### Bancada ao vivo")
         lead("O mesmo modelo de célula, sensores, filtros, proteção e filtro de Kalman, rodando em tempo real no seu "
-             "navegador. O pack começa cheio e o filtro começa achando que está em 80%. As outras abas rodam ensaios "
+             "navegador. O pack começa carregado em 98% (onde o carregador CC/CV para) e o filtro começa achando que está em 80%. As outras abas rodam ensaios "
              "fechados e medem os resultados.")
         pr = b.Params()
         dados = {k: (v.tolist() if isinstance(v, np.ndarray) else list(v) if isinstance(v, tuple) else v)
