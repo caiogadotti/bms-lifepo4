@@ -20,9 +20,9 @@ estado de carga, num painel interativo.
 
 </div>
 
-![Painel com a aba do modelo aberta](docs/preview.png)
+![Bancada ao vivo: descarga, filtro de Kalman perdendo a histerese e pico de 15 A](docs/demo.gif)
 
-![Aba Brinque: a bancada ao vivo](docs/brinque.png)
+![Painel com a aba do modelo aberta](docs/preview.png)
 
 ---
 

@@ -20,9 +20,9 @@ interactive dashboard.
 
 </div>
 
-![Dashboard with the model tab open](docs/preview.png)
+![Live bench: discharge, the Kalman filter losing track without hysteresis, and a 15 A spike](docs/demo.gif)
 
-![Play tab: the live test bench](docs/brinque.png)
+![Dashboard with the model tab open](docs/preview.png)
 
 > The interface is in Portuguese. Main terms: *carga/descarga* = charge/discharge,
 > *estado de carga (SOC)* = state of charge, *célula* = cell, *chave* = switch.
