@@ -29,6 +29,10 @@ interactive dashboard.
 
 ---
 
+## Where it came from
+
+Coursework from my Cyber-Physical Systems Engineering degree at PUC-SP. The test was meant to run on a bench with a teaching BMS kit, but the university's only kit broke, so the work became a simulation. I later rewrote the model in Python, with the same systems view I use at work at Descartee: measure, filter, decide, act.
+
 ## The problem
 
 The BMS looks after the battery: it measures voltage, current and temperature, estimates how much

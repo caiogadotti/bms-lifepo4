@@ -26,6 +26,10 @@ estado de carga, num painel interativo.
 
 ---
 
+## De onde veio
+
+Trabalho da graduação em Engenharia de Sistemas Ciberfísicos na PUC-SP. O ensaio era para ser na bancada, com um kit didático de BMS, mas o kit da faculdade quebrou e o trabalho virou simulação. Depois reescrevi o modelo em Python, com a mesma visão de sistema que uso no trabalho na Descartee: medir, filtrar, decidir e agir.
+
 ## O problema
 
 O BMS é o sistema que cuida da bateria: mede tensão, corrente e temperatura, estima quanto de carga

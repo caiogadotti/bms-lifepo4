@@ -30,6 +30,7 @@ ui.hero("Sistemas embarcados · estimação de estado",
         "BMS ignora a histerese, um efeito de 18 mV que no LiFePO4 vale até 15 pontos de carga.",
         [("pack", "4S · 12,8 V · 3 Ah"), ("passo", "1 s"), ("erro de SOC", "0,4% → 7,0%"), ("testes", "14")],
         "Caio Gadotti · Projeto da faculdade · Engenharia de Sistemas Ciberfísicos (ESCF) · PUC-SP",
+        origem='Trabalho da graduação em Engenharia de Sistemas Ciberfísicos na PUC-SP. O ensaio era para ser na bancada, com um kit didático de BMS, mas o kit da faculdade quebrou e o trabalho virou simulação. Depois reescrevi o modelo em Python, com a mesma visão de sistema que uso no trabalho: medir, filtrar, decidir e agir.',
         links=[("Código no GitHub", "https://github.com/caiogadotti/bms-lifepo4"),
                ("Como funciona (README)", "https://github.com/caiogadotti/bms-lifepo4#readme")])
 ui.escopo(
@@ -115,6 +116,20 @@ with tabs[0]:
                  for k, v in asdict(pr).items()}
         dados.update(R0m=float(np.mean(pr.R0)), eta=pr.eta_carga)
         html = (Path(__file__).parent / "brinque.html").read_text(encoding="utf-8").replace("__DADOS__", json.dumps(dados))
+        ui.roteiro([
+            ("O filtro corrige o chute",
+             "clique em <b>Pack cheio</b> e deixe em Repouso por alguns segundos.",
+             "o tracejado amarelo (o filtro, que começa achando 80%) sobe e encosta na barra verde (a carga real).",
+             "É o filtro de Kalman usando a tensão medida para corrigir a contagem de corrente."),
+            ("Esconda a histerese do filtro",
+             "clique em <b>Descarga 1C</b> e desligue <b>filtro de Kalman sabe da histerese</b>.",
+             "o <b>Erro do SOC estimado</b> sobe para 5 a 7 pontos e o tracejado se afasta da barra.",
+             "É a pergunta central do projeto: 18 mV mal explicados viram vários pontos de erro de carga."),
+            ("Provoque falhas",
+             "clique em <b>Pico de 15 A</b>. Depois clique em <b>Carga 0,5C</b> e suba o ambiente para 50 °C.",
+             "a chave de descarga abre em cerca de 3 s. Com a célula passando de 45 °C, só a chave de carga abre.",
+             "A proteção é separada por sentido, como num BMS real: dá para parar de carregar e continuar descarregando."),
+        ])
         st.iframe(html, height=820)
         como_ler([
             ("Corrente", "A · + descarga", "O que a bancada pede ao pack. Positivo tira energia da bateria, negativo carrega. "
